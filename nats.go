@@ -268,8 +268,12 @@ func (b *natsBroker) publish(ctx context.Context, topic string, buf []byte, opts
 	}
 
 	span := b.startProducerSpan(options.Context, m)
-
-	err := b.conn.PublishMsg(m)
+	var err error
+	if b.streamInfo != nil {
+		_, err = b.jsCtx.PublishMsg(m)
+	} else {
+		err = b.conn.PublishMsg(m)
+	}
 
 	b.finishProducerSpan(span, err)
 
