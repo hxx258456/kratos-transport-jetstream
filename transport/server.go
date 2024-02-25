@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-kratos/kratos/v2/transport"
 
-	nbroker "github.com/hxx258456/kratos-transport-jetstream/broker"
+	jetBroker "github.com/hxx258456/kratos-transport-jetstream/broker"
 	"github.com/tx7do/kratos-transport/broker"
 	"github.com/tx7do/kratos-transport/utils"
 )
@@ -57,7 +57,7 @@ func NewServer(opts ...ServerOption) *Server {
 
 	srv.init(opts...)
 
-	srv.Broker = nbroker.NewBroker(srv.brokerOpts...)
+	srv.Broker = jetBroker.NewBroker(srv.brokerOpts...)
 
 	return srv
 }
