@@ -15,8 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	api "github.com/tx7do/kratos-transport/testing/api/manual"
 
+	jetBroker "github.com/hxx258456/kratos-transport-jetstream/broker"
+	natsGo "github.com/nats-io/nats.go"
 	"github.com/tx7do/kratos-transport/broker"
 	"github.com/tx7do/kratos-transport/broker/nats"
+	protoApi "github.com/tx7do/kratos-transport/testing/api/protobuf"
 )
 
 const (
@@ -24,25 +27,32 @@ const (
 	testTopic   = "test_topic"
 )
 
-func handleHygrothermograph(_ context.Context, topic string, headers broker.Headers, msg *api.Hygrothermograph) error {
+func handleHygrothermograph(_ context.Context, topic string, headers broker.Headers, msg *protoApi.Hygrothermograph) error {
 	log.Infof("Topic %s, Headers: %+v, Payload: %+v\n", topic, headers, msg)
 	return nil
 }
 
 func TestServer(t *testing.T) {
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM, syscall.SIGQUIT)
 
 	ctx := context.Background()
 
 	srv := NewServer(
 		WithAddress([]string{localBroker}),
 		WithCodec("json"),
+		WithBrokerOptions(jetBroker.WithJetStream(natsGo.StreamConfig{
+			Name:      "test",
+			Subjects:  []string{testTopic},
+			Retention: natsGo.WorkQueuePolicy,
+		})),
 	)
 
 	_ = RegisterSubscriber(srv,
 		testTopic,
 		handleHygrothermograph,
+		broker.WithQueueName("testQ"),
+		jetBroker.WithDeliverAll(),
 	)
 
 	if err := srv.Start(ctx); err != nil {

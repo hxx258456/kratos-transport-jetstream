@@ -14,10 +14,12 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	natsGo "github.com/nats-io/nats.go"
 
+	_ "github.com/go-kratos/kratos/v2/encoding"
+	_ "github.com/go-kratos/kratos/v2/encoding/proto"
 	"github.com/stretchr/testify/assert"
-
 	"github.com/tx7do/kratos-transport/broker"
 	api "github.com/tx7do/kratos-transport/testing/api/manual"
+	protoApi "github.com/tx7do/kratos-transport/testing/api/protobuf"
 	"github.com/tx7do/kratos-transport/tracing"
 )
 
@@ -351,7 +353,7 @@ func Test_JetSream_Publish(t *testing.T) {
 	assert.Nil(t, err)
 	count := 10
 	for i := 0; i < count; i++ {
-		err = b.Publish(context.Background(), testTopic, api.Hygrothermograph{Humidity: float64(time.Now().Unix())})
+		err = b.Publish(context.Background(), testTopic, protoApi.Hygrothermograph{Humidity: "testestst"})
 		assert.Nil(t, err)
 	}
 
