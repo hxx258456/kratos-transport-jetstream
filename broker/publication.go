@@ -1,4 +1,4 @@
-package nats
+package broker
 
 import "github.com/tx7do/kratos-transport/broker"
 
