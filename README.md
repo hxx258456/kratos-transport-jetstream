@@ -1,2 +1,2 @@
-# kratos-transport-nsq
-kratos for nsq
+# kratos-transport-jetstream
+kratos for nats jetstream
