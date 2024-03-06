@@ -42,18 +42,27 @@ func TestServer(t *testing.T) {
 		WithAddress([]string{localBroker}),
 		WithCodec("json"),
 		WithBrokerOptions(jetBroker.WithJetStream(natsGo.StreamConfig{
-			Name:      "test",
-			Subjects:  []string{testTopic},
+			Name:      "stream-1",
+			Subjects:  []string{"stream.*"},
 			Retention: natsGo.WorkQueuePolicy,
 		})),
 	)
 
-	_ = RegisterSubscriber(srv,
-		testTopic,
+	err := RegisterSubscriber(srv,
+		"stream.1",
 		handleHygrothermograph,
-		broker.WithQueueName("testQ"),
+		broker.WithQueueName("stream-1-group"),
 		jetBroker.WithDeliverAll(),
 	)
+	assert.Nil(t, err)
+
+	err = RegisterSubscriber(srv,
+		"stream.2",
+		handleHygrothermograph,
+		broker.WithQueueName("stream-2-group"),
+		jetBroker.WithDeliverAll(),
+	)
+	assert.Nil(t, err)
 
 	if err := srv.Start(ctx); err != nil {
 		panic(err)

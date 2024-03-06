@@ -354,21 +354,24 @@ func (b *natsBroker) Subscribe(topic string, handler broker.Handler, binder brok
 
 	b.RLock()
 	if b.streamInfo != nil {
-		subOpts := []natsGo.SubOpt{}
-		if options.Context.Value(deliverAllKey{}) != nil {
-			subOpts = append(subOpts, natsGo.DeliverAll())
-		}
 
-		if options.Context.Value(deliverNewKey{}) != nil {
-			subOpts = append(subOpts, natsGo.DeliverNew())
-		}
-
-		if options.Context.Value(deliverLastKey{}) != nil {
-			subOpts = append(subOpts, natsGo.DeliverLast())
-		}
 		if len(options.Queue) > 0 {
+			subOpts := []natsGo.SubOpt{natsGo.Durable(options.Queue)}
+			if options.Context.Value(deliverAllKey{}) != nil {
+				subOpts = append(subOpts, natsGo.DeliverAll())
+			}
 
+			if options.Context.Value(deliverNewKey{}) != nil {
+				subOpts = append(subOpts, natsGo.DeliverNew())
+			}
+
+			if options.Context.Value(deliverLastKey{}) != nil {
+				subOpts = append(subOpts, natsGo.DeliverLast())
+			}
 			sub, err = b.jsCtx.QueueSubscribe(topic, options.Queue, fn, subOpts...)
+			if err != nil {
+				log.Error(err)
+			}
 
 		} else {
 			sub, err = b.jsCtx.Subscribe(topic, fn)
