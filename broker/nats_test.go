@@ -343,7 +343,7 @@ func Test_JetStream_Publish(t *testing.T) {
 		broker.WithCodec("json"),
 		WithJetStream(natsGo.StreamConfig{
 			Name:      "stream-1",
-			Subjects:  []string{"stream.*"},
+			Subjects:  []string{"stream.1", "stream.2", "stream.3", "stream.4"},
 			Retention: natsGo.WorkQueuePolicy,
 		}),
 	)
@@ -361,6 +361,19 @@ func Test_JetStream_Publish(t *testing.T) {
 		err = b.Publish(context.Background(), "stream.2", protoApi.Hygrothermograph{Humidity: "testestst"})
 		assert.Nil(t, err)
 	}
+
+	count3 := 10
+	for i := 0; i < count3; i++ {
+		err = b.Publish(context.Background(), "stream.3", protoApi.Hygrothermograph{Humidity: "testestst"})
+		assert.Nil(t, err)
+	}
+
+	count4 := 10
+	for i := 0; i < count4; i++ {
+		err = b.Publish(context.Background(), "stream.4", protoApi.Hygrothermograph{Humidity: "testestst"})
+		assert.Nil(t, err)
+	}
+
 }
 
 func Test_JetSream_Subscribe(t *testing.T) {

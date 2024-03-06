@@ -185,18 +185,7 @@ func (b *natsBroker) Connect() error {
 				return err
 			}
 			var s *natsGo.StreamInfo
-			s, err = b.jsCtx.StreamInfo(b.streamCfg.Name)
-			if err != nil {
-				if errors.Is(err, natsGo.ErrStreamNotFound) {
-					s, err = b.jsCtx.AddStream(&b.streamCfg)
-					if err != nil {
-						return err
-					}
-				} else {
-					return err
-				}
-			}
-			s, err = b.jsCtx.UpdateStream(&b.streamCfg)
+			s, err = b.jsCtx.AddStream(&b.streamCfg)
 			if err != nil {
 				return err
 			}
@@ -269,7 +258,7 @@ func (b *natsBroker) publish(ctx context.Context, topic string, buf []byte, opts
 
 	span := b.startProducerSpan(options.Context, m)
 	var err error
-	if b.streamInfo != nil {
+	if b.jsCtx != nil {
 		_, err = b.jsCtx.PublishMsg(m)
 	} else {
 		err = b.conn.PublishMsg(m)
@@ -353,10 +342,10 @@ func (b *natsBroker) Subscribe(topic string, handler broker.Handler, binder brok
 	var err error
 
 	b.RLock()
-	if b.streamInfo != nil {
+	if b.jsCtx != nil {
 
 		if len(options.Queue) > 0 {
-			subOpts := []natsGo.SubOpt{natsGo.Durable(options.Queue)}
+			subOpts := []natsGo.SubOpt{natsGo.ConsumerName(options.Queue)}
 			if options.Context.Value(deliverAllKey{}) != nil {
 				subOpts = append(subOpts, natsGo.DeliverAll())
 			}
@@ -368,6 +357,7 @@ func (b *natsBroker) Subscribe(topic string, handler broker.Handler, binder brok
 			if options.Context.Value(deliverLastKey{}) != nil {
 				subOpts = append(subOpts, natsGo.DeliverLast())
 			}
+
 			sub, err = b.jsCtx.QueueSubscribe(topic, options.Queue, fn, subOpts...)
 			if err != nil {
 				log.Error(err)

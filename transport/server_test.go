@@ -28,7 +28,7 @@ const (
 )
 
 func handleHygrothermograph(_ context.Context, topic string, headers broker.Headers, msg *protoApi.Hygrothermograph) error {
-	log.Infof("Topic %s, Headers: %+v, Payload: %+v\n", topic, headers, msg)
+	log.Infof("Topic %s, Headers: %+v, Payload: %+v,%d\n", topic, headers, msg, time.Now().Unix())
 	return nil
 }
 
@@ -43,10 +43,14 @@ func TestServer(t *testing.T) {
 		WithCodec("json"),
 		WithBrokerOptions(jetBroker.WithJetStream(natsGo.StreamConfig{
 			Name:      "stream-1",
-			Subjects:  []string{"stream.*"},
+			Subjects:  []string{"stream.1", "stream.2", "stream.3", "stream.4"},
 			Retention: natsGo.WorkQueuePolicy,
 		})),
 	)
+
+	if err := srv.Start(ctx); err != nil {
+		panic(err)
+	}
 
 	err := RegisterSubscriber(srv,
 		"stream.1",
@@ -60,13 +64,27 @@ func TestServer(t *testing.T) {
 		"stream.2",
 		handleHygrothermograph,
 		broker.WithQueueName("stream-2-group"),
+
+		jetBroker.WithDeliverAll(),
+	)
+
+	err = RegisterSubscriber(srv,
+		"stream.3",
+		handleHygrothermograph,
+		broker.WithQueueName("stream-3-group"),
+
 		jetBroker.WithDeliverAll(),
 	)
 	assert.Nil(t, err)
 
-	if err := srv.Start(ctx); err != nil {
-		panic(err)
-	}
+	err = RegisterSubscriber(srv,
+		"stream.4",
+		handleHygrothermograph,
+		broker.WithQueueName("stream-4-group"),
+
+		jetBroker.WithDeliverAll(),
+	)
+	assert.Nil(t, err)
 
 	defer func() {
 		if err := srv.Stop(ctx); err != nil {
